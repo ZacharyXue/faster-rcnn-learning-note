@@ -34,9 +34,10 @@ def read_image(path, dtype=np.float32, color=True):
 
 
 def resize_bbox(bbox, in_size, out_size):
-
-    # TODO: 没有搞明白这个函数的意义
-
+    """
+    根据要求的输出尺寸和img的输入尺寸调整bbox的尺寸，
+    是Fast RCNN从SPPNet中引入的。
+    """
     bbox = bbox.copy()
     y_scale = float(out_size[0]) / in_size[0]
     x_scale = float(out_size[1]) / in_size[1]
@@ -49,7 +50,7 @@ def resize_bbox(bbox, in_size, out_size):
 
 
 def flip_bbox(bbox, size, y_flip=False, x_flip=False):
-    
+    # TODO: 不太清楚这个函数做什么
     H, W = size
     bbox = bbox.copy()
     if y_flip:
@@ -69,8 +70,9 @@ def flip_bbox(bbox, size, y_flip=False, x_flip=False):
 
 def crop_bbox(bbox, y_slice=None, x_slice=None,
               allow_outside_center=True, return_param=False):
-    t, b, _ = y_slice.indices(0)
-    l, r, _ = x_slice.indices(0)
+    # TODO: 不太清楚这部分的作用
+    t, b, _ = _slice_to_bounds(y_slice)
+    l, r, _ = _slice_to_bounds(x_slice)
     crop_bb = np.array((t, l, b, r))
 
     if allow_outside_center:
@@ -92,3 +94,62 @@ def crop_bbox(bbox, y_slice=None, x_slice=None,
         return bbox, {'index': np.flatnonzero(mask)}
     else:
         return bbox
+
+
+def _slice_to_bounds(slice_):
+    """
+    对于所取区域是否超出临界进行判断
+    """
+    if slice_ is None:
+        return 0, np.inf
+    
+    if slice_.start is None:
+        l = 0
+    else:
+        l = slice_.start
+
+    if slice_.stop is None:
+        u = np.inf
+    else:
+        u = slice_.stop
+
+    return l, u
+
+
+def translate_bbox(bbox, y_offset=0, x_offset=0):
+    """
+    这个函数主要是对于输入进行偏移
+    """
+    out_bbox = bbox.copy()
+    out_bbox[:, :2] += (y_offset, x_offset)
+    out_bbox[:, 2:] += (y_offset, x_offset)
+
+    return out_bbox
+
+
+def random_flip(img, y_random=False, x_random=False,
+                return_param=False, copy=False):
+    """
+    对图像进行随机的翻转
+    """
+    y_flip, x_flip = False, False
+
+    if y_random:
+        y_flip = random.choice([True, False])
+    if x_random:
+        x_flip = random.choice([True, False])
+
+    if y_flip:
+        img = img[:, ::-1, :]
+    if x_flip:
+        img = img[:, :, ::-1]
+    
+    # 这里copy的意义应该是在于传入的img和函数外接收的img虽然值相同
+    # 但是两个是相互独立的
+    if copy:
+        img = img.copy()
+
+    if return_param:
+        return img, {'y_flip': y_flip, 'x_flip': x_flip}
+    else:
+        return img
