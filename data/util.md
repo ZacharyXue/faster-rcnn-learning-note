@@ -72,3 +72,15 @@ slice(0, 6, None)
 >>>
 ```
 
+### `random`类
+
+在 `util` 中使用的 `random` 类函数 `choice`,该函数是在输入中随机选择一个元素。使用示例为：
+
+```python
+y_flip = random.choice([True, False])
+```
+
+另一个使用比较多的是 `random.shuffle()`，这个在自己构建训练集的时候会用于打乱训练集样本。
+
+还有 `random.random()`，用于生成0 到 1.0 的一个随机浮点数，而 `random.uniform(a, b)` 等价于 `a + (b-a) * random()`。
+
