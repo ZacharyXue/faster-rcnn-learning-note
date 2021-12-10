@@ -23,6 +23,7 @@ def read_image(path, dtype=np.float32, color=True):
         img = np.asarray(img, dtype=dtype)
     # 无论try语句中是否抛出异常，finally中的语句一定会被执行
     finally:
+        # 先检查是否有close属性，避免f为空
         if hasattr(f, 'close'):
             f.close()
         
