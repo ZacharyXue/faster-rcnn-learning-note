@@ -1,6 +1,7 @@
 from __future__ import  absolute_import
 from __future__ import division
 from xml.etree.ElementTree import ParseError
+from scipy.ndimage.measurements import label
 import torch as t
 import numpy as np
 from utils import array_tool as at
@@ -214,6 +215,91 @@ class FasterRCNN(nn.Module):
             prepared_imgs = imgs
 
         bboxes = list()
-        lables = list()
+        labels = list()
         scores = list()
         for img, size in zip(prepared_imgs, sizes):
+
+            # img[None]：
+            # >>> a
+            # array([1, 2, 3])
+            # >>> a[None]
+            # array([[1, 2, 3]])
+            # 从上面可以看出索引位置为None相当于给array增加了一个维度
+            img = at.totensor(img[None]).float()
+            
+            scale = img.shape[3] / size[1]
+            # 这里self()为进入forward()
+            roi_cls_loc, roi_scores, rois, _ = self(img, scale=scale)
+            # We are assuming that batch size is 1.
+
+            # 如果我们希望使用tensor，但是又不希望被记录, 
+            # 可以使用tensor.data 或者tensor.detach()
+            roi_score = roi_scores.data         
+            roi_cls_loc = roi_cls_loc.data
+            roi = at.totensor(rois) / scale
+
+            # Convert predictions to bounding boxes in image coordinates.
+            # Bounding boxes are scaled to the scale of the input images.
+
+            # repeat(): 对张量进行复制
+            mean = t.Tensor(self.loc_normalize_mean).cuda().\
+                repeat(self.n_class)[None]
+            std = t.Tensor(self.loc_normalize_std).cuda().\
+                repeat(self.n_class)[None]
+
+            # 关于 view 和 reshape 的区别
+            # view只能处理连续的数组，但是reshape不是这样的
+            # 详细：https://blog.csdn.net/Flag_ing/article/details/109129752
+            roi_cls_loc = (roi_cls_loc * std + mean)
+            roi_cls_loc = roi_cls_loc.view(-1, self.n_class, 4)
+            
+            # expand_as(): 将张量扩展为参数tensor的大小
+            roi = roi.view(-1, 1, 4).expand_as(roi_cls_loc)
+            cls_bbox = loc2bbox(at.tonumpy(roi).reshape((-1, 4)),
+                                at.tonumpy(roi_cls_loc).reshape((-1, 4)))
+            cls_bbox = at.totensor(cls_bbox)
+            cls_bbox = cls_bbox.view(-1, self.n_class * 4)
+            # clip bounding box
+            # clamp(): 将输入input张量每个元素的夹紧到区间 [min,max]，
+            #          并返回结果到一个新张量。
+            #          关于“夹紧”的方法仅仅是对于超出范围的直接归到min或者max
+            cls_bbox[:, 0::2] = (cls_bbox[:, 0::2]).clamp(min=0, max=size[0])
+            cls_bbox[:, 1::2] = (cls_bbox[:, 1::2]).clamp(min=0, max=size[1])
+
+            prob = (F.softmax(at.totensor(roi_score), dim=1))
+
+            bbox, label, score = self._suppress(cls_bbox, prob)
+            bboxes.append(bbox)
+            labels.append(label)
+            scores.append(score)
+        
+        # 设置score_thresh和nms_thresh
+        self.use_preset('evaluate')
+        self.train()
+        return bboxes, labels, scores
+    
+    def get_optimizer(self):
+        """
+        return optimizer, It could be overwriten if you want to specify 
+        special optimizer
+        """
+        lr = opt.lr
+        params = []
+        # named_parameters(): 获取到所有的参数，进而在 optimizer 进行特殊的设置
+        for key, value in dict(self.named_parameters()).items():
+            if value.requires_grad:
+                # 这里对 params 进行设置，后面选择 optimizer 的时候作为输入
+                if 'bias' in key:
+                    params += [{'params': [value], 'lr': lr * 2, 'weight_decay': 0}]
+                else:
+                    params += [{'params': [value], 'lr': lr, 'weight_decay': opt.weight_decay}]
+        if opt.use_adam:
+            self.optimizer = t.optim.Adam(params)
+        else:
+            self.optimizer = t.optim.SGD(params, momentum=0.9)
+        return self.optimizer
+
+    def scale_lr(self, decay=0.1):
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] *= decay
+        return self.optimizer
