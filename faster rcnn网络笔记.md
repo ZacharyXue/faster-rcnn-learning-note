@@ -47,7 +47,7 @@ Region Proposal Network结构图如下：
 
 ![Region Proposal Network](pic/faster%20rcnn%20RPN.png)
 
-对应上图，[Region Proposal Network部分代码](model/region_proposal_network.py#77)如下：（为方便表示上图结构，有删减）
+对应上图，[Region Proposal Network部分代码](model/region_proposal_network.py#L77)如下：（为方便表示上图结构，有删减）
 
 ```Python
 class RegionProposalNetwork(nn.Module):
@@ -105,9 +105,9 @@ class RegionProposalNetwork(nn.Module):
 ```
 
 这里有几个需要注意的细节：
-1. **anchor**：上面代码中anchor的使用为:[RegionProposalNetwork](model/region_proposal_network.py#176)$\rightarrow$[ProposalCreator](model/utils/creator_tool.py#368)$\rightarrow$[loc2bbox](model/utils/bbox_tools.py#7)，可以将其理解为bounding box的先验长宽比
+1. **anchor**：上面代码中anchor的使用为:[RegionProposalNetwork](model/region_proposal_network.py#L176)$\rightarrow$[ProposalCreator](model/utils/creator_tool.py#368)$\rightarrow$[loc2bbox](model/utils/bbox_tools.py#L7)，可以将其理解为bounding box的先验长宽比
 2. **nms**：在`self.proposal_layer()`中使用NMS（non-maximum suppression）去除重叠bounding box中的冗余box（RCNN中引入）
-3. **loss func**：RPN的损失函数和fast rcnn部分很像，包括两部分：classification( $log loss$ )和regression( $smooth L1$ )，代码见[trainer.py](trainer.py#123)
+3. **loss func**：RPN的损失函数和fast rcnn部分很像，包括两部分：classification( $log loss$ )和regression( $smooth L1$ )，代码见[trainer.py](trainer.py#L123)
 4. bouuding box regression中的坐标如下：($x$、$x_a$和$x^*$分别为预测框、anchor和ground-truth box)
     ![](pic/faster%20rcnn%20RPN%20regression.png)
 
@@ -121,7 +121,7 @@ class RegionProposalNetwork(nn.Module):
 ROI Pooling的目标是将不同尺寸的input pooling为相同尺寸的output，因此这里动态调整pooling的size
 和stride使得最终的output尺寸相同。
 
-此处代码可见：[VGG16RoIHead](model/faster_rcnn_vgg16.py#79)
+此处代码可见：[VGG16RoIHead](model/faster_rcnn_vgg16.py#L79)
 
 ## Fast RCNN
 
@@ -129,7 +129,7 @@ ROI Pooling的目标是将不同尺寸的input pooling为相同尺寸的output�
 
 ![Fast RCNN](pic/Fast%20RCNN网络.png)
 
-这一部分和RPN很类似，[代码](model/faster_rcnn_vgg16.py#53)如下：（有删减）
+这一部分和RPN很类似，[代码](model/faster_rcnn_vgg16.py#L53)如下：（有删减）
 ```Python
 class VGG16RoIHead(nn.Module):
 
@@ -152,7 +152,7 @@ class VGG16RoIHead(nn.Module):
         return roi_cls_locs, roi_scores
 ```
 
-之后的[损失函数部分](trainer.py#143)和RPN部分也很相似。
+之后的[损失函数部分](trainer.py#L143)和RPN部分也很相似。
 
 ## 网络结构总结
 
