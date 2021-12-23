@@ -105,10 +105,10 @@ class RegionProposalNetwork(nn.Module):
 ```
 
 这里有几个需要注意的细节：
-1. **anchor**：上面代码中anchor的使用为:[RegionProposalNetwork](model/region_proposal_network.py#L176)$\rightarrow$[ProposalCreator](model/utils/creator_tool.py#368)$\rightarrow$[loc2bbox](model/utils/bbox_tools.py#L7)，可以将其理解为bounding box的先验长宽比
+1. **anchor**：上面代码中anchor的使用为:[RegionProposalNetwork](model/region_proposal_network.py#L176) $ \rightarrow $ [ProposalCreator](model/utils/creator_tool.py#368) $ \rightarrow $ [loc2bbox](model/utils/bbox_tools.py#L7)，可以将其理解为bounding box的先验长宽比
 2. **nms**：在`self.proposal_layer()`中使用NMS（non-maximum suppression）去除重叠bounding box中的冗余box（RCNN中引入）
-3. **loss func**：RPN的损失函数和fast rcnn部分很像，包括两部分：classification( $log loss$ )和regression( $smooth L1$ )，代码见[trainer.py](trainer.py#L123)
-4. bouuding box regression中的坐标如下：($x$、$x_a$和$x^*$分别为预测框、anchor和ground-truth box)
+3. **loss func**：RPN的损失函数和fast rcnn部分很像，包括两部分：classification( $ log loss $ )和regression( $ smooth L1 $ )，代码见[trainer.py](trainer.py#L123)
+4. bouuding box regression中的坐标如下：( $ x $ 、 $ x_a $ 和 $ x^* $分别为预测框、anchor和ground-truth box)
     ![](pic/faster%20rcnn%20RPN%20regression.png)
 
 
@@ -170,3 +170,11 @@ class VGG16RoIHead(nn.Module):
 
 结果展示如下：
 ![](pic/训练过程.jpg)
+
+## 参考文献
+
+1. Rich feature hierarchies for accurate object detection and semantic segmentation
+2. Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition
+3. Fast R-CNN
+4. Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks
+5. 一文读懂Faster RCNN：[https://zhuanlan.zhihu.com/p/31426458](https://zhuanlan.zhihu.com/p/31426458)

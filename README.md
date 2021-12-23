@@ -2,6 +2,8 @@
  
 项目来源：[simple-faster-rcnn-pytorch](https://github.com/chenyuntc/simple-faster-rcnn-pytorch)
 
+学习笔记：[Faster RCNN网络笔记](faster%20rcnn网络笔记.md)
+
 ## 反思
 
 本身自己的想法是通过抄写一遍这个项目来让自己熟悉如何写项目。
