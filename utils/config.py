@@ -55,6 +55,8 @@ class Config:
         for k, v in kwargs.items():
             if k not in state_dict:
                 raise ValueError('UnKnown Option: "--%s"' % k)
+            # 使用 setattr 而不是直接赋值的好处在于假如属性不存在
+            # setattr可以直接创建一个新的对象属性而不是报错
             setattr(self, k, v)
 
         print('======user config========')
